@@ -60,6 +60,15 @@ variable "iam_groups" {
   default = {}
 }
 
+variable "aws_ecr_repositories" {
+  description = "List of AWS Elastic Container Registry to create."
+  type = map(object({
+    image_tag_mutability = optional(string, "MUTABLE")
+    force_destroy        = optional(bool, false)
+  }))
+  default = {}
+}
+
 locals {
   groups_policies = merge(
     { for data in flatten([

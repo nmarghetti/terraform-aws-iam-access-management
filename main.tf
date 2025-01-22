@@ -40,6 +40,7 @@ resource "aws_iam_group" "iam_groups" {
 
 resource "aws_iam_policy" "iam_policies" {
   for_each = { for key, policy in var.iam_policies : key => policy }
+  tags     = var.tags
   name     = each.key
   policy   = each.value
 }
@@ -67,4 +68,12 @@ resource "aws_iam_group_membership" "group" {
   name  = each.key
   group = each.key
   users = each.value.users
+}
+
+resource "aws_ecr_repository" "ecr_repository" {
+  for_each = { for key, ecr in var.aws_ecr_repositories : key => ecr }
+  tags     = var.tags
+
+  name                 = each.key
+  image_tag_mutability = each.value.image_tag_mutability
 }
