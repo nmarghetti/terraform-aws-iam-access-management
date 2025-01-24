@@ -45,3 +45,8 @@ output "iam_policies" {
   description = "AWS IAM policies"
   value       = resource.aws_iam_policy.iam_policies
 }
+
+output "iam_users_by_groups" {
+  description = "List of IAM users by groups"
+  value       = local.groups_users
+}

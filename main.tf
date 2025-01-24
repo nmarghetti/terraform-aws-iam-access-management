@@ -36,6 +36,13 @@ resource "aws_iam_group" "iam_groups" {
   for_each = { for key, group in var.iam_groups : key => group }
   name     = each.key
   path     = each.value.path
+
+  lifecycle {
+    precondition {
+      condition     = length(local.groups_undefined) == 0
+      error_message = "The following groups are not defined in the variable iam_groups: ${join(", ", local.groups_undefined)}. You are referencing groups in users that are not defined in the variable iam_groups."
+    }
+  }
 }
 
 resource "aws_iam_policy" "iam_policies" {
@@ -63,11 +70,11 @@ resource "aws_iam_user_policy_attachment" "user_policy" {
 
 resource "aws_iam_group_membership" "group" {
   depends_on = [module.iam_users, resource.aws_iam_group.iam_groups]
-  for_each   = { for key, group in var.iam_groups : key => group if length(group.users) > 0 }
+  for_each   = { for group, users in local.groups_users : group => users }
 
   name  = each.key
   group = each.key
-  users = each.value.users
+  users = each.value
 }
 
 resource "aws_ecr_repository" "ecr_repository" {
