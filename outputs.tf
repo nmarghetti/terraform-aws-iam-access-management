@@ -41,6 +41,11 @@ output "iam_groups" {
   value       = resource.aws_iam_group.iam_groups
 }
 
+output "iam_roles" {
+  description = "AWS IAM roles"
+  value       = resource.aws_iam_role.iam_roles
+}
+
 output "iam_policies" {
   description = "AWS IAM policies"
   value       = resource.aws_iam_policy.iam_policies

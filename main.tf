@@ -45,6 +45,50 @@ resource "aws_iam_group" "iam_groups" {
   }
 }
 
+data "aws_iam_policy_document" "assume_role" {
+  depends_on = [module.iam_users, resource.aws_iam_group.iam_groups]
+  for_each   = { for key, role in var.iam_roles : key => role if role.assume_role_policy == null }
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = each.value.assume_role_principals != null ? each.value.assume_role_principals.type : "AWS"
+      identifiers = each.value.assume_role_principals != null ? each.value.assume_role_principals.identifiers : concat(
+        [for user in each.value.users : local.available_users[user].arn],
+        [for group in each.value.groups : local.available_groups[group].arn],
+      )
+    }
+  }
+  lifecycle {
+    precondition {
+      condition = alltrue([
+        # The error is not clear when checking that
+        # # Ensure the user is referenced in the variable iam_users or iam_existing_users
+        # length([for user in each.value.users : local.available_users[user].arn if contains(keys(local.available_users), user)]) == 0,
+        # # Ensure the group is referenced in the variable iam_groups or iam_existing_groups
+        # length([for group in each.value.groups : local.available_groups[group].arn if contains(keys(local.available_groups), group)]) == 0,
+        length(concat(
+          [for user in each.value.users : local.available_users[user].arn if contains(keys(local.available_users), user)],
+          [for group in each.value.groups : local.available_groups[group].arn if contains(keys(local.available_groups), group)],
+          each.value.assume_role_principals != null ? each.value.assume_role_principals.identifiers : []
+        )) != 0
+      ])
+      error_message = "Missing role assume principals, you must at least set principal, users or groups. Users and groups must be either defined in the variable iam_users/iam_existing_users or iam_groups/iam_existing_groups."
+    }
+  }
+}
+
+resource "aws_iam_role" "iam_roles" {
+  depends_on = [module.iam_users]
+  for_each   = { for key, role in var.iam_roles : key => role }
+  tags       = var.tags
+
+  name               = each.key
+  path               = each.value.path
+  assume_role_policy = each.value.assume_role_policy != null ? each.value.assume_role_policy : data.aws_iam_policy_document.assume_role[each.key].json
+}
+
 resource "aws_iam_policy" "iam_policies" {
   for_each = { for key, policy in var.iam_policies : key => policy }
   tags     = var.tags
@@ -65,6 +109,14 @@ resource "aws_iam_user_policy_attachment" "user_policy" {
   for_each   = { for key, data in local.users_policies : key => data }
 
   user       = each.value.user
+  policy_arn = each.value.policy
+}
+
+resource "aws_iam_role_policy_attachment" "role_policy" {
+  depends_on = [resource.aws_iam_role.iam_roles, resource.aws_iam_policy.iam_policies]
+  for_each   = { for key, data in local.roles_policies : key => data }
+
+  role       = each.value.role
   policy_arn = each.value.policy
 }
 

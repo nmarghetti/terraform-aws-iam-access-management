@@ -9,6 +9,11 @@ data "aws_iam_user" "iam_user" {
   user_name  = each.key
 }
 
+data "aws_iam_group" "iam_existing_group" {
+  for_each   = var.iam_existing_groups
+  group_name = each.key
+}
+
 data "aws_iam_policy" "iam_policy" {
   depends_on = [resource.aws_iam_policy.iam_policies]
   for_each   = { for key, policy in var.iam_policies : key => policy }
