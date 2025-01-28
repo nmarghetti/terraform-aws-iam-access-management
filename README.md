@@ -1,5 +1,11 @@
 # terraform-aws-iam-access-management
 
+## Terraform
+
+Published to Terraform registry following <https://developer.hashicorp.com/terraform/registry/modules/publish>.
+
+Available at [iam-access-management](https://registry.terraform.io/modules/nmarghetti/iam-access-management/aws/latest).
+
 ## Requirements
 
 | Name                                                                     | Version  |
