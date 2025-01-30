@@ -1,21 +1,20 @@
 data "aws_iam_user" "iam_existing_user" {
-  for_each  = var.iam_existing_users
+  for_each  = var.aws_iam_existing_users
   user_name = each.key
 }
 
 data "aws_iam_user" "iam_user" {
   depends_on = [module.iam_users]
-  for_each   = var.iam_users
+  for_each   = var.aws_iam_users
   user_name  = each.key
 }
 
 data "aws_iam_group" "iam_existing_group" {
-  for_each   = var.iam_existing_groups
+  for_each   = var.aws_iam_existing_groups
   group_name = each.key
 }
 
-data "aws_iam_policy" "iam_policy" {
-  depends_on = [resource.aws_iam_policy.iam_policies]
-  for_each   = { for key, policy in var.iam_policies : key => policy }
-  name       = each.key
+data "aws_iam_policy" "iam_existing_policy" {
+  for_each = { for key, policy in var.aws_iam_existing_policies : key => policy }
+  name     = each.key
 }

@@ -6,7 +6,7 @@ module "iam_users" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-user"
   version = "5.48.0"
 
-  for_each                      = { for key, user in var.iam_users : key => user }
+  for_each                      = { for key, user in var.aws_iam_users : key => user }
   pgp_key                       = var.pgp_key
   tags                          = var.tags
   create_user                   = true
@@ -33,7 +33,7 @@ module "secrets" {
 }
 
 resource "aws_iam_group" "iam_groups" {
-  for_each = { for key, group in var.iam_groups : key => group }
+  for_each = { for key, group in var.aws_iam_groups : key => group }
   name     = each.key
   path     = each.value.path
 
@@ -47,7 +47,7 @@ resource "aws_iam_group" "iam_groups" {
 
 data "aws_iam_policy_document" "assume_role" {
   depends_on = [module.iam_users, resource.aws_iam_group.iam_groups]
-  for_each   = { for key, role in var.iam_roles : key => role if role.assume_role_policy == null }
+  for_each   = { for key, role in var.aws_iam_roles : key => role if role.assume_role_policy == null }
 
   statement {
     effect  = "Allow"
@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "assume_role" {
 
 resource "aws_iam_role" "iam_roles" {
   depends_on = [module.iam_users]
-  for_each   = { for key, role in var.iam_roles : key => role }
+  for_each   = { for key, role in var.aws_iam_roles : key => role }
   tags       = var.tags
 
   name               = each.key
@@ -90,7 +90,7 @@ resource "aws_iam_role" "iam_roles" {
 }
 
 resource "aws_iam_policy" "iam_policies" {
-  for_each = { for key, policy in var.iam_policies : key => policy }
+  for_each = { for key, policy in var.aws_iam_policies : key => policy }
   tags     = var.tags
   name     = each.key
   policy   = each.value
