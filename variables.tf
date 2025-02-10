@@ -11,13 +11,28 @@ variable "pgp_key" {
 
 variable "aws_iam_policies" {
   description = "List of AWS IAM policies to create."
-  type        = map(any)
+  type        = map(string)
   default     = {}
+}
+
+variable "aws_iam_policy_documents" {
+  description = "List of AWS IAM policy documents to create."
+  type = map(object({
+    json    = string
+    version = string
+    statement = list(object({
+      sid       = optional(string)
+      effect    = string
+      actions   = list(string)
+      resources = list(string)
+    }))
+  }))
+  default = {}
 }
 
 variable "aws_iam_existing_policies" {
   description = "List of AWS IAM policies that exist already and can be referenced."
-  type        = map(any)
+  type        = map(object({}))
   default     = {}
 }
 

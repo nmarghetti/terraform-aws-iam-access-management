@@ -19,6 +19,40 @@ module "iam_users" {
   policy_arns                   = concat(each.value.policy_arns, [for policy in each.value.policy_names : resource.aws_iam_policy.iam_policies[policy].arn])
 }
 
+# Checking with null_resource as condition cannot be applied to module
+resource "null_resource" "unknow_users" {
+  lifecycle {
+    precondition {
+      condition     = length(local.users_undefined) == 0
+      error_message = "The following users are not defined: ${join(", ", local.users_undefined)}. You are referencing users that are not defined in the variable aws_iam_users nor aws_iam_existing_users."
+    }
+  }
+}
+resource "null_resource" "unknow_groups" {
+  lifecycle {
+    precondition {
+      condition     = length(local.groups_undefined) == 0
+      error_message = "The following groups are not defined: ${join(", ", local.groups_undefined)}. You are referencing groups that are not defined in the variable aws_iam_groups nor aws_iam_existing_groups."
+    }
+  }
+}
+resource "null_resource" "unknow_policies" {
+  lifecycle {
+    precondition {
+      condition     = length(local.policies_undefined) == 0
+      error_message = "The following policies are not defined: ${join(", ", local.policies_undefined)}. You are referencing policies that are not defined in the variable aws_iam_policies nor aws_iam_existing_policies."
+    }
+  }
+}
+resource "null_resource" "duplicated_policies" {
+  lifecycle {
+    precondition {
+      condition     = length(setintersection(keys(var.aws_iam_policies), keys(var.aws_iam_policy_documents))) == 0
+      error_message = "Those policies are defined both as string (aws_iam_policies) and documents (aws_iam_policy_documents): ${join(", ", setintersection(keys(var.aws_iam_policies), keys(var.aws_iam_policy_documents)))}."
+    }
+  }
+}
+
 module "secrets" {
   depends_on = [module.iam_users]
   source     = "./module/secrets"
@@ -36,13 +70,6 @@ resource "aws_iam_group" "iam_groups" {
   for_each = { for key, group in var.aws_iam_groups : key => group }
   name     = each.key
   path     = each.value.path
-
-  lifecycle {
-    precondition {
-      condition     = length(local.groups_undefined) == 0
-      error_message = "The following groups are not defined in the variable iam_groups: ${join(", ", local.groups_undefined)}. You are referencing groups in users that are not defined in the variable iam_groups."
-    }
-  }
 }
 
 data "aws_iam_policy_document" "assume_role" {
@@ -63,11 +90,6 @@ data "aws_iam_policy_document" "assume_role" {
   lifecycle {
     precondition {
       condition = alltrue([
-        # The error is not clear when checking that
-        # # Ensure the user is referenced in the variable iam_users or iam_existing_users
-        # length([for user in each.value.users : local.available_users[user].arn if contains(keys(local.available_users), user)]) == 0,
-        # # Ensure the group is referenced in the variable iam_groups or iam_existing_groups
-        # length([for group in each.value.groups : local.available_groups[group].arn if contains(keys(local.available_groups), group)]) == 0,
         length(concat(
           [for user in each.value.users : local.available_users[user].arn if contains(keys(local.available_users), user)],
           [for group in each.value.groups : local.available_groups[group].arn if contains(keys(local.available_groups), group)],
@@ -90,10 +112,13 @@ resource "aws_iam_role" "iam_roles" {
 }
 
 resource "aws_iam_policy" "iam_policies" {
-  for_each = { for key, policy in var.aws_iam_policies : key => policy }
-  tags     = var.tags
-  name     = each.key
-  policy   = each.value
+  for_each = { for policy_name, policy_data in merge(
+    { for key, policy_str in var.aws_iam_policies : key => { policy_str : policy_str, document : false } },
+    { for key, policy_doc in var.aws_iam_policy_documents : key => { policy_doc : policy_doc, document : true } }
+  ) : policy_name => policy_data }
+  tags   = var.tags
+  name   = each.key
+  policy = each.value.document ? each.value.policy_doc.json : each.value.policy_str
 }
 
 resource "aws_iam_group_policy_attachment" "group_policy" {
