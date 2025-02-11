@@ -2,7 +2,7 @@ locals {
   # All users/groups/policies to be created or existing, given in input
   input_users_name    = distinct(concat(keys(var.aws_iam_users), keys(var.aws_iam_existing_users)))
   input_groups_name   = distinct(concat(keys(var.aws_iam_groups), keys(var.aws_iam_existing_groups)))
-  input_policies_name = distinct(concat(keys(var.aws_iam_policies), keys(var.aws_iam_existing_policies)))
+  input_policies_name = distinct(concat(keys(var.aws_iam_policies), keys(var.aws_iam_policy_documents), keys(var.aws_iam_existing_policies)))
 
   # All users/groups/policies created and retrieved from AWS
   available_users    = merge(data.aws_iam_user.iam_user, data.aws_iam_user.iam_existing_user)
@@ -10,7 +10,7 @@ locals {
   available_policies = merge(resource.aws_iam_policy.iam_policies, data.aws_iam_policy.iam_existing_policy)
 
   groups_policies = merge(
-    # policies by arn
+    # policies by arn - groups to create
     { for data in flatten([
       for key, group in { for key, group in var.aws_iam_groups : key => {
         pair = [for policy in group.policy_arns : {
@@ -19,13 +19,32 @@ locals {
         }]
       } } : group.pair
     ]) : "${data.group} - ${data.policy}" => data },
-    # policies by name
+    # policies by arn - existing groups
+    { for data in flatten([
+      for key, group in { for key, group in var.aws_iam_existing_groups : key => {
+        pair = [for policy in group.policy_arns : {
+          group  = key
+          policy = policy
+        }]
+      } } : group.pair
+    ]) : "${data.group} - ${data.policy}" => data },
+    # policies by name - groups to create
     { for data in flatten([
       for key, group in { for key, group in var.aws_iam_groups : key => {
         pair = [for policy in group.policy_names : {
           group  = key
           name   = policy
-          policy = local.available_policies[policy].arn
+          policy = try(local.available_policies[policy].arn, null)
+        }]
+      } } : group.pair
+    ]) : "${data.group} - ${data.name}" => data },
+    # policies by name - existing groups
+    { for data in flatten([
+      for key, group in { for key, group in var.aws_iam_existing_groups : key => {
+        pair = [for policy in group.policy_names : {
+          group  = key
+          name   = policy
+          policy = try(local.available_policies[policy].arn, null)
         }]
       } } : group.pair
     ]) : "${data.group} - ${data.name}" => data }
@@ -57,7 +76,7 @@ locals {
         pair = [for policy in user.policy_names : {
           user   = key
           name   = policy
-          policy = local.available_policies[policy].arn
+          policy = try(local.available_policies[policy].arn, null)
         }]
       } } : user.pair
     ]) : "${data.user} - ${data.name}" => data }
@@ -87,6 +106,8 @@ locals {
 
   policies_name = distinct(concat(
     flatten([for key, user in var.aws_iam_existing_users : [for policy in user.policy_names : policy]]),
+    flatten([for key, group in var.aws_iam_groups : [for policy in group.policy_names : policy]]),
+    flatten([for key, group in var.aws_iam_existing_groups : [for policy in group.policy_names : policy]]),
     flatten([for key, role in var.aws_iam_roles : [for policy in role.policy_names : policy]])
   ))
 

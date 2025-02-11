@@ -20,7 +20,7 @@ module "iam_users" {
 }
 
 # Checking with null_resource as condition cannot be applied to module
-resource "null_resource" "unknow_users" {
+resource "null_resource" "check_unknow_users" {
   lifecycle {
     precondition {
       condition     = length(local.users_undefined) == 0
@@ -28,7 +28,15 @@ resource "null_resource" "unknow_users" {
     }
   }
 }
-resource "null_resource" "unknow_groups" {
+resource "null_resource" "check_duplicated_users" {
+  lifecycle {
+    precondition {
+      condition     = length(setintersection(keys(var.aws_iam_users), keys(var.aws_iam_existing_users))) == 0
+      error_message = "Those users found both in aws_iam_users and aws_iam_existing_users: ${join(", ", setintersection(keys(var.aws_iam_users), keys(var.aws_iam_existing_users)))}."
+    }
+  }
+}
+resource "null_resource" "check_unknow_groups" {
   lifecycle {
     precondition {
       condition     = length(local.groups_undefined) == 0
@@ -36,7 +44,16 @@ resource "null_resource" "unknow_groups" {
     }
   }
 }
-resource "null_resource" "unknow_policies" {
+resource "null_resource" "check_duplicated_groups" {
+  lifecycle {
+    precondition {
+      condition     = length(setintersection(keys(var.aws_iam_groups), keys(var.aws_iam_existing_groups))) == 0
+      error_message = "Those groups found both in aws_iam_groups and aws_iam_existing_groups: ${join(", ", setintersection(keys(var.aws_iam_groups), keys(var.aws_iam_existing_groups)))}."
+    }
+  }
+}
+
+resource "null_resource" "check_unknow_policies" {
   lifecycle {
     precondition {
       condition     = length(local.policies_undefined) == 0
@@ -44,7 +61,15 @@ resource "null_resource" "unknow_policies" {
     }
   }
 }
-resource "null_resource" "duplicated_policies" {
+resource "null_resource" "check_duplicated_policies" {
+  lifecycle {
+    precondition {
+      condition     = length(setintersection(concat(keys(var.aws_iam_policies), keys(var.aws_iam_policy_documents)), keys(var.aws_iam_existing_policies))) == 0
+      error_message = "Those policies found both in aws_iam_policies or aws_iam_policy_documents and aws_iam_existing_policies: ${join(", ", setintersection(concat(keys(var.aws_iam_policies), keys(var.aws_iam_policy_documents)), keys(var.aws_iam_existing_policies)))}."
+    }
+  }
+}
+resource "null_resource" "check_duplicated_policies_to_create" {
   lifecycle {
     precondition {
       condition     = length(setintersection(keys(var.aws_iam_policies), keys(var.aws_iam_policy_documents))) == 0
@@ -123,7 +148,7 @@ resource "aws_iam_policy" "iam_policies" {
 
 resource "aws_iam_group_policy_attachment" "group_policy" {
   depends_on = [resource.aws_iam_group.iam_groups, resource.aws_iam_policy.iam_policies]
-  for_each   = { for key, data in local.groups_policies : key => data }
+  for_each   = { for key, data in local.groups_policies : key => data if data.policy != null }
 
   group      = each.value.group
   policy_arn = each.value.policy
@@ -131,7 +156,7 @@ resource "aws_iam_group_policy_attachment" "group_policy" {
 
 resource "aws_iam_user_policy_attachment" "user_policy" {
   depends_on = [module.iam_users, resource.aws_iam_policy.iam_policies]
-  for_each   = { for key, data in local.users_policies : key => data }
+  for_each   = { for key, data in local.users_policies : key => data if data.policy != null }
 
   user       = each.value.user
   policy_arn = each.value.policy

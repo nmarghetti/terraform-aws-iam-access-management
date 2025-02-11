@@ -9,6 +9,8 @@ variable "pgp_key" {
   type        = string
 }
 
+## IAM Access Management
+
 variable "aws_iam_policies" {
   description = "List of AWS IAM policies to create."
   type        = map(string)
@@ -86,6 +88,8 @@ variable "aws_iam_groups" {
 variable "aws_iam_existing_groups" {
   description = "List of AWS IAM groups that exist already and can be referenced."
   type = map(object({
+    policy_arns  = optional(list(string), [])
+    policy_names = optional(list(string), [])
   }))
   default = {}
 }
