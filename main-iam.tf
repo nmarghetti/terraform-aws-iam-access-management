@@ -78,19 +78,6 @@ resource "null_resource" "check_duplicated_policies_to_create" {
   }
 }
 
-module "secrets" {
-  depends_on = [module.iam_users]
-  source     = "./module/secrets"
-
-  for_each             = { for key, secret in var.aws_secrets : key => secret }
-  tags                 = var.tags
-  secret_project_name  = each.key
-  region               = each.value.region
-  secrets              = each.value.secrets
-  robotic_users_reader = each.value.robotic_users_reader
-  users_owner          = each.value.users_owner
-}
-
 resource "aws_iam_group" "iam_groups" {
   for_each = { for key, group in var.aws_iam_groups : key => group }
   name     = each.key
@@ -147,27 +134,27 @@ resource "aws_iam_policy" "iam_policies" {
 }
 
 resource "aws_iam_group_policy_attachment" "group_policy" {
-  depends_on = [resource.aws_iam_group.iam_groups, resource.aws_iam_policy.iam_policies]
-  for_each   = { for key, data in local.groups_policies : key => data if data.policy != null }
+  depends_on = [resource.aws_iam_group.iam_groups, resource.aws_iam_policy.iam_policies, data.aws_iam_policy.iam_existing_policy]
+  for_each   = local.groups_policies
 
   group      = each.value.group
-  policy_arn = each.value.policy
+  policy_arn = each.value.policy != null ? each.value.policy : local.available_policies[each.value.policy_name].arn
 }
 
 resource "aws_iam_user_policy_attachment" "user_policy" {
-  depends_on = [module.iam_users, resource.aws_iam_policy.iam_policies]
-  for_each   = { for key, data in local.users_policies : key => data if data.policy != null }
+  depends_on = [module.iam_users, resource.aws_iam_policy.iam_policies, data.aws_iam_policy.iam_existing_policy]
+  for_each   = local.users_policies
 
   user       = each.value.user
-  policy_arn = each.value.policy
+  policy_arn = each.value.policy != null ? each.value.policy : local.available_policies[each.value.policy_name].arn
 }
 
 resource "aws_iam_role_policy_attachment" "role_policy" {
-  depends_on = [resource.aws_iam_role.iam_roles, resource.aws_iam_policy.iam_policies]
-  for_each   = { for key, data in local.roles_policies : key => data }
+  depends_on = [resource.aws_iam_role.iam_roles, resource.aws_iam_policy.iam_policies, data.aws_iam_policy.iam_existing_policy]
+  for_each   = local.roles_policies
 
   role       = each.value.role
-  policy_arn = each.value.policy
+  policy_arn = each.value.policy != null ? each.value.policy : local.available_policies[each.value.policy_name].arn
 }
 
 resource "aws_iam_group_membership" "group" {
@@ -177,12 +164,4 @@ resource "aws_iam_group_membership" "group" {
   name  = each.key
   group = each.key
   users = each.value
-}
-
-resource "aws_ecr_repository" "ecr_repository" {
-  for_each = { for key, ecr in var.aws_ecr_repositories : key => ecr }
-  tags     = var.tags
-
-  name                 = each.value.name != null ? each.value.name : each.key
-  image_tag_mutability = each.value.image_tag_mutability
 }

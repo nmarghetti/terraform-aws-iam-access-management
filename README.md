@@ -6,6 +6,8 @@ Published to Terraform registry following <https://developer.hashicorp.com/terra
 
 Available at [iam-access-management](https://registry.terraform.io/modules/nmarghetti/iam-access-management/aws/latest).
 
+Here is an example of use: [terraform-aws-iam-access-management-example](https://github.com/nmarghetti/terraform-aws-iam-access-management-example)
+
 ## Requirements
 
 | Name                                                                     | Version  |

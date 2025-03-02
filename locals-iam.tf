@@ -9,6 +9,8 @@ locals {
   available_groups   = merge(resource.aws_iam_group.iam_groups, data.aws_iam_group.iam_existing_group)
   available_policies = merge(resource.aws_iam_policy.iam_policies, data.aws_iam_policy.iam_existing_policy)
 
+  # Policies would need to be created before to able to list the groups/users/roles attached to them
+
   groups_policies = merge(
     # policies by arn - groups to create
     { for data in flatten([
@@ -32,9 +34,10 @@ locals {
     { for data in flatten([
       for key, group in { for key, group in var.aws_iam_groups : key => {
         pair = [for policy in group.policy_names : {
-          group  = key
-          name   = policy
-          policy = try(local.available_policies[policy].arn, null)
+          group       = key
+          name        = policy
+          policy      = null
+          policy_name = policy
         }]
       } } : group.pair
     ]) : "${data.group} - ${data.name}" => data },
@@ -42,9 +45,10 @@ locals {
     { for data in flatten([
       for key, group in { for key, group in var.aws_iam_existing_groups : key => {
         pair = [for policy in group.policy_names : {
-          group  = key
-          name   = policy
-          policy = try(local.available_policies[policy].arn, null)
+          group       = key
+          name        = policy
+          policy      = null
+          policy_name = policy
         }]
       } } : group.pair
     ]) : "${data.group} - ${data.name}" => data }
@@ -74,9 +78,10 @@ locals {
     { for data in flatten([
       for key, user in { for key, user in var.aws_iam_existing_users : key => {
         pair = [for policy in user.policy_names : {
-          user   = key
-          name   = policy
-          policy = try(local.available_policies[policy].arn, null)
+          user        = key
+          name        = policy
+          policy      = null
+          policy_name = policy
         }]
       } } : user.pair
     ]) : "${data.user} - ${data.name}" => data }
@@ -96,9 +101,10 @@ locals {
     { for data in flatten([
       for key, role in { for key, role in var.aws_iam_roles : key => {
         pair = [for policy in role.policy_names : {
-          role   = key
-          name   = policy
-          policy = local.available_policies[policy].arn
+          role        = key
+          name        = policy
+          policy      = null
+          policy_name = policy
         }]
       } } : role.pair
     ]) : "${data.role} - ${data.name}" => data }

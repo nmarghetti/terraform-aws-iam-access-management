@@ -26,16 +26,6 @@ output "aws_iam_users_credentials" {
   }
 }
 
-output "aws_secrets" {
-  description = "AWS secrets"
-  value = {
-    for key, secret in module.secrets : key => {
-      secrets = secret.secrets
-      role    = secret.role
-    }
-  }
-}
-
 output "aws_iam_groups" {
   description = "AWS IAM groups"
   value       = resource.aws_iam_group.iam_groups
