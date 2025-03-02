@@ -30,7 +30,7 @@ data "aws_iam_policy_document" "robotic_user_assume_role" {
 }
 
 resource "aws_iam_role" "robotic_user_assume_role" {
-  name               = var.secret_project_name
+  name               = "aws_secret_assume_for_${var.secret_project_name}"
   assume_role_policy = data.aws_iam_policy_document.robotic_user_assume_role.json
   tags               = var.tags
 }
@@ -103,7 +103,7 @@ data "aws_iam_policy_document" "secrets" {
 }
 
 resource "aws_iam_policy" "secrets" {
-  name        = var.secret_project_name
+  name        = "aws_secret_access_to_${var.secret_project_name}"
   description = "Secrets policy for ${var.secret_project_name}"
   policy      = data.aws_iam_policy_document.secrets.json
   tags        = var.tags
