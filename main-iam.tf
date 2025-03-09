@@ -79,7 +79,7 @@ resource "null_resource" "check_duplicated_policies_to_create" {
 }
 
 resource "aws_iam_group" "iam_groups" {
-  for_each = { for key, group in var.aws_iam_groups : key => group }
+  for_each = var.aws_iam_groups
   name     = each.key
   path     = each.value.path
 }
@@ -115,7 +115,7 @@ data "aws_iam_policy_document" "assume_role" {
 
 resource "aws_iam_role" "iam_roles" {
   depends_on = [module.iam_users]
-  for_each   = { for key, role in var.aws_iam_roles : key => role }
+  for_each   = var.aws_iam_roles
   tags       = var.tags
 
   name               = each.key
@@ -159,7 +159,7 @@ resource "aws_iam_role_policy_attachment" "role_policy" {
 
 resource "aws_iam_group_membership" "group" {
   depends_on = [module.iam_users, resource.aws_iam_group.iam_groups]
-  for_each   = { for group, users in local.groups_users : group => users }
+  for_each   = local.groups_users
 
   name  = each.key
   group = each.key

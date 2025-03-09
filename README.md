@@ -26,5 +26,5 @@ Here is an example of use: [terraform-aws-iam-access-management-example](https:/
 
 | Name                                                                                                 | Source                                         | Version |
 | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------- |
-| <a name="module_this"></a> [this](#module_this)                                                      | nmarghetti/terraform-aws-iam-access-management | 1.1.2   |
+| <a name="module_this"></a> [this](#module_this)                                                      | nmarghetti/terraform-aws-iam-access-management | 1.1.3   |
 | [iam-user](https://github.com/terraform-aws-modules/terraform-aws-iam/tree/v5.48.0/modules/iam-user) | terraform-aws-modules/terraform-aws-iam        | 5.48.0  |

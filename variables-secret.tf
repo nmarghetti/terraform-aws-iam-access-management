@@ -5,6 +5,7 @@ variable "aws_secrets" {
     robotic_users_reader = list(string)
     users_owner          = list(string)
     secrets              = list(string)
+    resource_prefix      = optional(string, "aws_secret_")
   }))
   default = {}
 }

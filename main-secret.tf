@@ -9,4 +9,5 @@ module "secrets" {
   secrets              = each.value.secrets
   robotic_users_reader = each.value.robotic_users_reader
   users_owner          = each.value.users_owner
+  prefix               = each.value.resource_prefix
 }

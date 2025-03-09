@@ -40,6 +40,12 @@ variable "secrets" {
   }
 }
 
+variable "prefix" {
+  description = "Prefix for the roles/permissions related to the secrets"
+  type        = string
+  default     = "aws_secret_"
+}
+
 locals {
   aws_account_id = data.aws_caller_identity.current.account_id
 }

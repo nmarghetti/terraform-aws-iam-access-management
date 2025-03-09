@@ -8,7 +8,7 @@ output "aws_acm_certificates" {
   value       = resource.aws_acm_certificate.certificate
 }
 
-output "aws_route53_record" {
+output "aws_route53_records" {
   description = "List of route53 records"
   value       = resource.aws_route53_record.route53_record
 }
