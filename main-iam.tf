@@ -1,7 +1,11 @@
 # https://github.com/terraform-aws-modules/terraform-aws-iam/tree/v5.48.0/modules/iam-user
 # https://github.com/terraform-aws-modules/terraform-aws-iam/tree/v5.48.0/examples/iam-user
 module "iam_users" {
-  depends_on = [resource.aws_iam_policy.iam_policies]
+  depends_on = [
+    resource.aws_iam_policy.iam_policies,
+    data.aws_iam_policy.iam_existing_policy,
+    resource.null_resource.check_unknow_policies,
+  ]
 
   source  = "terraform-aws-modules/iam/aws//modules/iam-user"
   version = "5.48.0"
@@ -16,7 +20,7 @@ module "iam_users" {
   password_length               = each.value.password_length
   password_reset_required       = each.value.password_reset_required
   force_destroy                 = each.value.force_destroy
-  policy_arns                   = concat(each.value.policy_arns, [for policy in each.value.policy_names : resource.aws_iam_policy.iam_policies[policy].arn])
+  policy_arns                   = concat(each.value.policy_arns, [for policy in each.value.policy_names : local.available_policies[policy].arn])
 }
 
 # Checking with null_resource as condition cannot be applied to module

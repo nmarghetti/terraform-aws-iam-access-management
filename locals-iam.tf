@@ -111,6 +111,7 @@ locals {
   )
 
   policies_name = distinct(concat(
+    flatten([for key, user in var.aws_iam_users : [for policy in user.policy_names : policy]]),
     flatten([for key, user in var.aws_iam_existing_users : [for policy in user.policy_names : policy]]),
     flatten([for key, group in var.aws_iam_groups : [for policy in group.policy_names : policy]]),
     flatten([for key, group in var.aws_iam_existing_groups : [for policy in group.policy_names : policy]]),

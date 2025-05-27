@@ -15,6 +15,6 @@ data "aws_iam_group" "iam_existing_group" {
 }
 
 data "aws_iam_policy" "iam_existing_policy" {
-  for_each = { for key, policy in var.aws_iam_existing_policies : key => policy }
+  for_each = var.aws_iam_existing_policies
   name     = each.key
 }
