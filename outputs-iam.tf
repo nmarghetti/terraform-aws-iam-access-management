@@ -45,3 +45,21 @@ output "aws_iam_users_by_groups" {
   description = "List of IAM users by groups"
   value       = local.groups_users
 }
+
+output "debug_iam_inputs" {
+  value = {
+    input_users_name    = local.input_users_name
+    input_groups_name   = local.input_groups_name
+    input_policies_name = local.input_policies_name
+    groups_name         = local.groups_name
+    users_name          = local.users_name
+    groups_users        = local.groups_users
+    policies_name       = local.policies_name
+    groups_policies     = local.groups_policies
+    users_policies      = local.users_policies
+    roles_policies      = local.roles_policies
+    policies_undefined  = local.policies_undefined
+    groups_undefined    = local.groups_undefined
+    users_undefined     = local.users_undefined
+  }
+}

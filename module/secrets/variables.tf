@@ -34,10 +34,6 @@ variable "secrets" {
   description = "Secrets to be stored in AWS Secrets Manager"
   type        = list(string)
   default     = []
-  validation {
-    condition     = length(var.secrets) > 0
-    error_message = "You need to specify at least one secret to create."
-  }
 }
 
 variable "prefix" {

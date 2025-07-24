@@ -80,8 +80,8 @@ data "aws_iam_policy_document" "secrets_restriction" {
 }
 
 resource "aws_secretsmanager_secret" "secrets" {
-  for_each = toset(var.secrets)
-  name     = "${var.secret_project_name}-${each.value}"
+  for_each = length(var.secrets) == 0 ? toset(["main"]) : toset(var.secrets)
+  name     = length(var.secrets) == 0 ? var.secret_project_name : "${var.secret_project_name}-${each.value}"
   tags     = var.tags
   policy   = data.aws_iam_policy_document.secrets_restriction.json
 }
