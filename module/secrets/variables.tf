@@ -32,7 +32,7 @@ variable "secret_project_name" {
 
 variable "secrets" {
   description = "Secrets to be stored in AWS Secrets Manager"
-  type        = list(string)
+  type        = set(string)
   default     = []
 }
 

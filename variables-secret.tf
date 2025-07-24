@@ -4,7 +4,7 @@ variable "aws_secrets" {
     region               = string
     robotic_users_reader = list(string)
     users_owner          = list(string)
-    secrets              = optional(list(string), [])
+    secrets              = optional(set(string), [])
     resource_prefix      = optional(string, "aws_secret_")
   }))
   default = {}

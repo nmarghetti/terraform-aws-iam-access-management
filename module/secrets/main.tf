@@ -80,7 +80,8 @@ data "aws_iam_policy_document" "secrets_restriction" {
 }
 
 resource "aws_secretsmanager_secret" "secrets" {
-  for_each = length(var.secrets) == 0 ? toset(["main"]) : toset(var.secrets)
+  # Create a "default" secret if the list is empty, it is only for the key of terraform resource
+  for_each = length(var.secrets) == 0 ? ["default"] : var.secrets
   name     = length(var.secrets) == 0 ? var.secret_project_name : "${var.secret_project_name}-${each.value}"
   tags     = var.tags
   policy   = data.aws_iam_policy_document.secrets_restriction.json
