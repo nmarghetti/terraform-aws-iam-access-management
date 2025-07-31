@@ -2,7 +2,7 @@ variable "aws_secrets" {
   description = "Secret to be stored in AWS Secrets Manager"
   type = map(object({
     region               = string
-    robotic_users_reader = list(string)
+    robotic_users_reader = optional(list(string), [])
     users_owner          = list(string)
     secrets              = optional(set(string), [])
     resource_prefix      = optional(string, "aws_secret_")

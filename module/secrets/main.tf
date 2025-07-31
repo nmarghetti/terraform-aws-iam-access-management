@@ -30,6 +30,7 @@ data "aws_iam_policy_document" "robotic_user_assume_role" {
 }
 
 resource "aws_iam_role" "robotic_user_assume_role" {
+  count              = length(data.aws_iam_user.robotic_users) > 0 ? 1 : 0
   name               = "${var.prefix}${var.secret_project_name}"
   assume_role_policy = data.aws_iam_policy_document.robotic_user_assume_role.json
   tags               = var.tags
@@ -111,7 +112,8 @@ resource "aws_iam_policy" "secrets" {
 }
 
 resource "aws_iam_role_policy_attachment" "secrets_attach" {
-  role       = aws_iam_role.robotic_user_assume_role.name
+  count      = length(data.aws_iam_user.robotic_users) > 0 ? 1 : 0
+  role       = aws_iam_role.robotic_user_assume_role[0].name
   policy_arn = aws_iam_policy.secrets.arn
 }
 
